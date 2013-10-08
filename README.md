@@ -84,3 +84,7 @@ class TestCommandController extends \Famelo\Common\Command\AbstractInteractiveCo
 
 ?>
 ```
+
+Output:
+
+![](http://dl.dropbox.com/u/314491/Screenshots/jv-lk2135qp2.png)
