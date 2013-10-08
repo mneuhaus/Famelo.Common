@@ -41,7 +41,7 @@ use TYPO3\Flow\Annotations as Flow;
 /**
  * @Flow\Scope("singleton")
  */
-class TestCommandController extends Famelo\Common\Command\AbstractInteractiveCommandController {
+class TestCommandController extends \Famelo\Common\Command\AbstractInteractiveCommandController {
 
 	/**
 	 * An example command
