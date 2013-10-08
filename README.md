@@ -21,6 +21,15 @@ This abstract CommandController provides easy access to some console Helper from
 - TableHelper
     - table($rows, $headers = NULL)
 
+Additionally it enhanced the mapRequestArgumentsToControllerArguments method to ask for required arguments instead of throwing an exception:
+
+```
+(10:26:15) [flow-test] ./flow test:example
+Please specify the argument: requiredArgument
+lajdslakjsd
+You called the example command and passed "lajdslakjsd" as the first argument.
+```
+
 **Example**
 
 ```php

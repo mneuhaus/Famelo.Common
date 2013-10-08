@@ -126,7 +126,7 @@ abstract class AbstractInteractiveCommandController extends \TYPO3\Flow\Cli\Comm
      *
      * @throws \RuntimeException In case the fallback is deactivated and the response can not be hidden
      */
-    public function askHiddenResponse($output, $question, $fallback = true) {
+    public function askHiddenResponse($question, $fallback = true) {
 		return $this->dialog->askHiddenResponse($this->output, $question, $fallback);
     }
 
@@ -147,7 +147,7 @@ abstract class AbstractInteractiveCommandController extends \TYPO3\Flow\Cli\Comm
      *
      * @throws \Exception When any of the validators return an error
      */
-    public function askAndValidate($output, $question, $validator, $attempts = false, $default = null, array $autocomplete = null) {
+    public function askAndValidate($question, $validator, $attempts = false, $default = null, array $autocomplete = null) {
         return $this->dialog->askAndValidate($this->output, $question, $validator, $attempts, $default, $autocomplete);
     }
 
