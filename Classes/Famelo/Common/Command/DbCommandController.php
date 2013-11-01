@@ -6,10 +6,22 @@ namespace Famelo\Common\Command;
  *                                                                        *
  *                                                                        */
 
+use DavidBadura\Fixtures\Exception\RuntimeException;
+use DavidBadura\Fixtures\FixtureEvents;
 use DavidBadura\Fixtures\FixtureManager\FixtureManager;
+use DavidBadura\Fixtures\Loader\DirectoryLoader;
+use DavidBadura\Fixtures\Loader\FilterLoader;
+use DavidBadura\Fixtures\Loader\JsonLoader;
+use DavidBadura\Fixtures\Loader\MatchLoader;
+use DavidBadura\Fixtures\Loader\PhpLoader;
+use DavidBadura\Fixtures\Loader\TomlLoader;
+use DavidBadura\Fixtures\Loader\YamlLoader;
+use DavidBadura\Fixtures\Persister\PersisterInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Internal\CommitOrderCalculator;
 use Famelo\Common\Command\AbstractInteractiveCommandController;
+use Famelo\Common\Fixtures\CsvService;
+use Famelo\Common\Fixtures\FlowService;
 use Famelo\Satisfy\Domain\Model\User;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Persistence\Doctrine\Mapping\ClassMetadata;
@@ -20,7 +32,14 @@ use TYPO3\Party\Domain\Model\PersonName;
  *
  * @Flow\Scope("singleton")
  */
-class FameloCommandController extends AbstractInteractiveCommandController {
+class DbCommandController extends AbstractInteractiveCommandController {
+
+    /**
+     * @var \TYPO3\Flow\Cache\CacheManager
+     * @Flow\Inject
+     */
+    protected $cacheManager;
+
 	/**
 	 * @Flow\Inject
 	 * @var \Doctrine\Common\Persistence\ObjectManager
@@ -33,18 +52,31 @@ class FameloCommandController extends AbstractInteractiveCommandController {
 	 * @param boolean $noConfirmation don't ask for confirmation
 	 * @return void
 	 */
-	public function truncateDbCommand($noConfirmation = FALSE) {
+	public function purgeAllCommand($noConfirmation = FALSE) {
 		if ($noConfirmation === TRUE || $this->askConfirmation('Are you sure, you want to truncate all existing Tables? [yes/no]' . chr(10))) {
 			$connection = $this->entityManager->getConnection();
 			$orderedTables = $this->getOrderedTables();
         	$platform = $this->entityManager->getConnection()->getDatabasePlatform();
 
+            $skipTables = array();
 			$connection->executeUpdate("SET foreign_key_checks = 0;");
 			foreach($orderedTables as $table) {
+                if (in_array($table, $skipTables)) {
+                    continue;
+                }
 				$this->outputLine('Truncating: ' . $table);
         		$connection->executeUpdate($platform->getTruncateTableSQL($table, true));
         	}
         	$connection->executeUpdate("SET foreign_key_checks = 1;");
+
+
+            // Flush some cache to trigger the regenration of the Roles
+            $this->cacheManager->getCache('Flow_Security_Policy')->flush();
+            $objectConfigurationCache = $this->cacheManager->getCache('Flow_Object_Configuration');
+            $objectConfigurationCache->remove('allAspectClassesUpToDate');
+            $objectConfigurationCache->remove('allCompiledCodeUpToDate');
+            $objectClassesCache = $this->cacheManager->getCache('Flow_Object_Classes');
+            $objectClassesCache->flush();
 
         	$this->outputLine();
         	$this->outputLine('Done');
