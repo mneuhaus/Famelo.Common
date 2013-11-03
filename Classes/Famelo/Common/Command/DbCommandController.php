@@ -83,6 +83,39 @@ class DbCommandController extends AbstractInteractiveCommandController {
 		}
 	}
 
+    /**
+     * Use this command to quickly drop all doctrine tables in the current configured database
+     *
+     * @param boolean $noConfirmation don't ask for confirmation
+     * @return void
+     */
+    public function dropAllCommand($noConfirmation = FALSE) {
+        if ($noConfirmation === TRUE || $this->askConfirmation('Are you sure, you want to drop all existing Tables? [yes/no]' . chr(10))) {
+            $connection = $this->entityManager->getConnection();
+            $orderedTables = $this->getOrderedTables();
+            $platform = $this->entityManager->getConnection()->getDatabasePlatform();
+
+            $skipTables = array();
+            $connection->executeUpdate("SET foreign_key_checks = 0;");
+            $orderedTables[] = 'flow_doctrine_migrationstatus';
+            foreach($orderedTables as $table) {
+                if (in_array($table, $skipTables)) {
+                    continue;
+                }
+                $this->outputLine('Dropping: ' . $table);
+                try {
+                    $connection->executeUpdate($platform->getDropTableSQL($table, true));
+                } catch(\Exception $e) {
+
+                }
+            }
+            $connection->executeUpdate("SET foreign_key_checks = 1;");
+
+            $this->outputLine();
+            $this->outputLine('Done');
+        }
+    }
+
 	public function getOrderedTables() {
   		$classes = array();
         $metadatas = $this->entityManager->getMetadataFactory()->getAllMetadata();
