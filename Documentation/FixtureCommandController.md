@@ -12,7 +12,6 @@ user:
     class: TYPO3\Party\Domain\Model\Person
   data:
     myUser:
-      branch: '@branch:cobus'
       accounts: ['@account:myAccout']
       name: '@name:myName'
 
