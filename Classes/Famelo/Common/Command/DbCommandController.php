@@ -111,6 +111,14 @@ class DbCommandController extends AbstractInteractiveCommandController {
             }
             $connection->executeUpdate("SET foreign_key_checks = 1;");
 
+            // Flush some cache to trigger the regenration of the Roles
+            $this->cacheManager->getCache('Flow_Security_Policy')->flush();
+            $objectConfigurationCache = $this->cacheManager->getCache('Flow_Object_Configuration');
+            $objectConfigurationCache->remove('allAspectClassesUpToDate');
+            $objectConfigurationCache->remove('allCompiledCodeUpToDate');
+            $objectClassesCache = $this->cacheManager->getCache('Flow_Object_Classes');
+            $objectClassesCache->flush();
+
             $this->outputLine();
             $this->outputLine('Done');
         }
