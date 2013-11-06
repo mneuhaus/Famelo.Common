@@ -79,6 +79,9 @@ class FixtureCommandController extends AbstractInteractiveCommandController {
 
         $fixtureManager = new FixtureManager($loader, $executor, $persister);
 
+        $fixtureManager->getExecutor()->removeConverter('default');
+        $fixtureManager->getExecutor()->addConverter(new \Famelo\Common\Fixtures\DefaultConverter());
+
         $fakerService = \Faker\Factory::create();
         $fixtureManager->addService('faker', $fakerService);
 
