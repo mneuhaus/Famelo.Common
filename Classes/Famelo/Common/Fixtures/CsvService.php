@@ -67,7 +67,7 @@ class CsvService {
 			'enclosure' => '"'
 		), $configuration);
 
-		$content = file_get_contents(FLOW_PATH_ROOT . 'Data/Fixtures/' . $source);
+		$content = file_get_contents(FLOW_PATH_ROOT . 'Fixtures/' . $source);
 		$rows = explode("\r", $content);
 		foreach ($rows as $key => $value) {
 			$rows[$key] = str_getcsv($value, $configuration['delimiter'], $configuration['enclosure']);
