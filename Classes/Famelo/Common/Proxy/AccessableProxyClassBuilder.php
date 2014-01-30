@@ -48,12 +48,12 @@ class AccessableProxyClassBuilder {
 	 * @return void
 	 */
 	public function buildAccessors($className, $proxyClass) {
-		$properties = $this->reflectionService->getClassPropertyNames($className);
 		$classSchema = $this->reflectionService->getClassSchema($className);
 
 		if ($classSchema === NULL) {
 			return;
 		}
+		$properties = $classSchema->getProperties();
 
 		$classMethods = get_class_methods($className);
 		$classAnnotation = $this->reflectionService->getClassAnnotation($className, 'Famelo\Common\Annotations\Accessable');
