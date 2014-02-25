@@ -27,10 +27,28 @@ use TYPO3\Flow\Utility\Arrays;
  * @Flow\Proxy(false)
  */
 class AccessableProxyClassBuilder {
+
+	/**
+	 * @var \TYPO3\Flow\Object\Proxy\Compiler
+	 */
+	protected $compiler;
+
 	/**
 	 * @var \TYPO3\Flow\Reflection\ReflectionService
 	 */
 	protected $reflectionService;
+
+	/**
+	 * @var \TYPO3\Flow\Object\CompileTimeObjectManager
+	 */
+	protected $objectManager;
+	/**
+	 * @param \TYPO3\Flow\Object\Proxy\Compiler $compiler
+	 * @return void
+	 */
+	public function injectCompiler(\TYPO3\Flow\Object\Proxy\Compiler $compiler) {
+		$this->compiler = $compiler;
+	}
 
 	/**
 	 * @param \TYPO3\Flow\Reflection\ReflectionService $reflectionService
@@ -38,6 +56,39 @@ class AccessableProxyClassBuilder {
 	 */
 	public function injectReflectionService(\TYPO3\Flow\Reflection\ReflectionService $reflectionService) {
 		$this->reflectionService = $reflectionService;
+	}
+
+	/**
+	 * @param \TYPO3\Flow\Object\CompileTimeObjectManager $objectManager
+	 * @return void
+	 */
+	public function injectObjectManager(\TYPO3\Flow\Object\CompileTimeObjectManager $objectManager) {
+		$this->objectManager = $objectManager;
+	}
+
+	/**
+	 * Analyzes the Object Configuration provided by the compiler and builds the necessary PHP code for the proxy classes
+	 * to realize dependency injection.
+	 *
+	 * @return void
+	 */
+	public function build() {
+		$this->objectConfigurations = $this->objectManager->getObjectConfigurations();
+		foreach ($this->objectConfigurations as $objectName => $objectConfiguration) {
+			$className = $objectConfiguration->getClassName();
+			if ($this->compiler->hasCacheEntryForClass($className) === TRUE) {
+				continue;
+			}
+
+			if ($objectName !== $className || $this->reflectionService->isClassAbstract($className) || $this->reflectionService->isClassFinal($className)) {
+				continue;
+			}
+			$proxyClass = $this->compiler->getProxyClass($className);
+			if ($proxyClass === FALSE) {
+				continue;
+			}
+			$this->buildAccessors($className, $proxyClass);
+		}
 	}
 
 	/**

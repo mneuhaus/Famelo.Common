@@ -27,6 +27,7 @@ class Package extends BasePackage {
 	public function boot(\TYPO3\Flow\Core\Bootstrap $bootstrap) {
 		$dispatcher = $bootstrap->getSignalSlotDispatcher();
 		$dispatcher->connect('TYPO3\Flow\Object\DependencyInjection\ProxyClassBuilder', 'extendProxyClass', 'Famelo\Common\Proxy\AccessableProxyClassBuilder', 'buildAccessors');
+		$dispatcher->connect('TYPO3\Flow\Command\CoreCommandController', 'additionalProxyClassBuilder', 'Famelo\Common\Proxy\AccessableProxyClassBuilder', 'build');
 	}
 }
 
