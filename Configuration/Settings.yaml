@@ -1,3 +1,13 @@
+Famelo:
+  Common:
+    pagination:
+      defaultLimit: 10
+      maxPages: 10
+      limits:
+        - 10
+        - 30
+        - 50
+        - 100
 TYPO3:
   Flow:
     object:
