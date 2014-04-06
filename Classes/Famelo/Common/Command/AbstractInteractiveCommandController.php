@@ -6,12 +6,15 @@ namespace Famelo\Common\Command;
  *                                                                        *
  *                                                                        */
 
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use TYPO3\Flow\Annotations as Flow;
 
 /**
  * @Flow\Scope("singleton")
  */
 abstract class AbstractInteractiveCommandController extends \TYPO3\Flow\Cli\CommandController {
+
+    private static $stty;
 
 	/**
 	 * Constructs the controller
@@ -34,12 +37,25 @@ abstract class AbstractInteractiveCommandController extends \TYPO3\Flow\Cli\Comm
 	 * @param array $arguments Optional arguments to use for sprintf
 	 * @return void
 	 */
-	protected function output($text, array $arguments = array()) {
+	public function output($text, array $arguments = array()) {
 		if ($arguments !== array()) {
 			$text = vsprintf($text, $arguments);
 		}
 		$this->output->write($text);
 	}
+
+    /**
+     * Outputs specified text to the console window and appends a line break
+     *
+     * @param string $text Text to output
+     * @param array $arguments Optional arguments to use for sprintf
+     * @return void
+     * @see output()
+     * @see outputLines()
+     */
+    public function outputLine($text = '', array $arguments = array()) {
+        $this->output($text . PHP_EOL, $arguments);
+    }
 
 	/**
 	 * Maps arguments delivered by the request object to the local controller arguments.
@@ -90,16 +106,148 @@ abstract class AbstractInteractiveCommandController extends \TYPO3\Flow\Cli\Comm
     /**
      * Asks a question to the user.
      *
+     * @param OutputInterface $output       An Output instance
      * @param string|array    $question     The question to ask
      * @param string          $default      The default answer if none is given by the user
      * @param array           $autocomplete List of values to autocomplete
+     * @param boolean         $fuzzy        Set this argument to TRUE to match the autocomplete based on similar_text
      *
      * @return string The user answer
      *
      * @throws \RuntimeException If there is no data to read in the input stream
      */
-    public function ask($question, $default = NULL, array $autocomplete = array()) {
-    	return $this->dialog->ask($this->output, $question, $default, $autocomplete);
+    public function ask($question, $default = null, array $autocomplete = null, $fuzzy = FALSE) {
+        if ($fuzzy === FALSE) {
+            return $this->dialog->ask($this->output, $question, $default, $autocomplete);
+        }
+
+        $this->output->write($question);
+
+        $inputStream = STDIN;
+
+        if (null === $autocomplete || !$this->hasSttyAvailable()) {
+            $ret = fgets($inputStream, 4096);
+            if (false === $ret) {
+                throw new \RuntimeException('Aborted');
+            }
+            $ret = trim($ret);
+        } else {
+            $ret = '';
+
+            $i = 0;
+            $ofs = -1;
+            $matches = $autocomplete;
+            $numMatches = count($matches);
+
+            $sttyMode = shell_exec('stty -g');
+
+            // Disable icanon (so we can fread each keypress) and echo (we'll do echoing here instead)
+            shell_exec('stty -icanon -echo');
+
+            // Add highlighted text style
+            $this->output->getFormatter()->setStyle('hl', new OutputFormatterStyle('magenta'));
+
+            // Read a keypress
+            while (!feof($inputStream)) {
+                $c = fread($inputStream, 1);
+
+                // Backspace Character
+                if ("\177" === $c) {
+                    $i--;
+                    $ret = substr($ret, 0, $i);
+                } elseif ("\033" === $c) { // Did we read an escape sequence?
+                    $c .= fread($inputStream, 2);
+
+                    // A = Up Arrow. B = Down Arrow
+                    if ('A' === $c[2] || 'B' === $c[2]) {
+                        if ('A' === $c[2] && -1 === $ofs) {
+                            $ofs = 0;
+                        }
+
+                        if (0 === $numMatches) {
+                            continue;
+                        }
+
+                        $ofs += ('A' === $c[2]) ? -1 : 1;
+                        $ofs = ($numMatches + $ofs) % $numMatches;
+                    }
+                } elseif (ord($c) < 32) {
+                    if ("\t" === $c || "\n" === $c) {
+                        if ($numMatches > 0 && -1 !== $ofs) {
+                            $ret = $matches[$ofs];
+                            // Echo out remaining chars for current match
+                            // $this->output->write(substr($ret, $i));
+                            // $this->output->write(' => <hl>' . $matches[$ofs] . '</hl>');
+                            $i = strlen($ret);
+                        }
+
+                        if ("\n" === $c) {
+                            $this->output->write($c);
+                            break;
+                        }
+
+                        $numMatches = 0;
+                    }
+
+                    continue;
+                } else {
+                    // $this->output->write($c);
+                    $ret .= $c;
+                    $i++;
+                }
+
+                $numMatches = 0;
+
+                $unorderedMatches = array();
+                foreach ($autocomplete as $value) {
+                    // If typed characters match the beginning chunk of value (e.g. [AcmeDe]moBundle)
+                    $similarity = similar_text($value, $ret);
+                    if ($similarity > 0) {
+                        $unorderedMatches[($similarity * 100) + $numMatches++] = $value;
+                    }
+                }
+
+                krsort($unorderedMatches);
+                $numMatches = 0;
+                $ofs = 0;
+                $matches = array();
+                foreach ($unorderedMatches as $value) {
+                    $matches[$numMatches++] = $value;
+                }
+
+                // Erase characters from cursor to end of line
+                $this->output->write("\033[K");
+
+                if ($numMatches > 0 && -1 !== $ofs) {
+                    // Save cursor position
+                    $this->output->write("\0337");
+                    // Write highlighted text
+                    $offset = 0;
+                    $match = $matches[$ofs];
+                    foreach(str_split($ret) as $value) {
+                        $pos = strpos($match, $value, $offset);
+                        if ($pos !== FALSE) {
+                            $match = substr_replace($match, '<<' . $value . '>>', $pos, 1);
+                            $offset = $pos + 4;
+                        }
+                    }
+                    $match = str_replace('<<', '<hl>', $match);
+                    $match = str_replace('>>', '</hl>', $match);
+                    $this->output->write($match);
+                    // Restore cursor position
+                    $this->output->write("\0338");
+                }
+            }
+
+            // Reset stty so it behaves normally again
+            shell_exec(sprintf('stty %s', $sttyMode));
+        }
+
+        if (array_values($autocomplete) !== $autocomplete) {
+            var_dump($autocomplete);
+        }
+
+        return strlen($ret) > 0 ? $ret : $default;
     }
 
     /**
@@ -220,6 +368,17 @@ abstract class AbstractInteractiveCommandController extends \TYPO3\Flow\Cli\Comm
         }
         $this->table->setRows($rows);
         $this->table->render($this->output);
+    }
+
+    protected function hasSttyAvailable()
+    {
+        if (null !== self::$stty) {
+            return self::$stty;
+        }
+
+        exec('stty 2>&1', $output, $exitcode);
+
+        return self::$stty = $exitcode === 0;
     }
 }
 
