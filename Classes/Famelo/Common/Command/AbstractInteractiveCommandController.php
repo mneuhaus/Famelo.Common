@@ -243,10 +243,6 @@ abstract class AbstractInteractiveCommandController extends \TYPO3\Flow\Cli\Comm
             shell_exec(sprintf('stty %s', $sttyMode));
         }
 
-        if (array_values($autocomplete) !== $autocomplete) {
-            var_dump($autocomplete);
-        }
-
         return strlen($ret) > 0 ? $ret : $default;
     }
 
