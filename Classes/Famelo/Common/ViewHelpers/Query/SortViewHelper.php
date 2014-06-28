@@ -43,37 +43,44 @@ class SortViewHelper extends AbstractViewHelper {
 	 * @author Marc Neuhaus <apocalip@gmail.com>
 	 * @api
 	 */
-	public function render($objects = null, $as = "sortedObjects", $sortingAs = "sorting") {
+	public function render($objects = null, $as = "sortedObjects", $sortingAs = "currentSorting", $defaultProperty = NULL, $defaultDirection = 'ASC') {
 		$this->objects = $objects;
 		$this->query = $objects->getQuery();
 
 		$this->request = $this->controllerContext->getRequest();
 
-		$sorting = array();
+		$property = $defaultProperty;
+		$direction = $defaultDirection;
+
 		if( $this->request->hasArgument("sort") ){
 			$property = $this->request->getArgument("sort");
 
-			if( $this->request->hasArgument("direction") )
+			if( $this->request->hasArgument("direction") ){
 				$direction = $this->request->getArgument("direction");
-			else
+			} else {
 				$direction = "DESC";
+			}
+		}
 
+		if ($property !== NULL) {
 			$this->query->setOrderings(array(
 				$property => $direction
 			));
-
-			$sorting = array(
-				"property" => $property,
-				"direction"=> $direction,
-				"oppositeDirection"=> $direction == "ASC" ? "DESC" : "ASC"
-			);
 		}
 
+		$sorting = array(
+			"property" => $property,
+			"direction"=> $direction,
+			"oppositeDirection"=> $direction == "ASC" ? "DESC" : "ASC"
+		);
+
+		$this->viewHelperVariableContainer->add('Famelo\Common\ViewHelpers\Query\SortViewHelper', 'sorting', $sorting);
 		$this->templateVariableContainer->add($sortingAs, $sorting);
 		$this->templateVariableContainer->add($as, $this->query->execute());
 		$content = $this->renderChildren();
 		$this->templateVariableContainer->remove($sortingAs);
 		$this->templateVariableContainer->remove($as);
+		$this->viewHelperVariableContainer->remove('Famelo\Common\ViewHelpers\Query\SortViewHelper', 'sorting');
 
 		return $content;
 	}
