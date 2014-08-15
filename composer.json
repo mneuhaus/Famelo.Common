@@ -5,7 +5,8 @@
     "version": null,
     "require": {
         "typo3/flow": "*",
-        "davidbadura/fixtures": "*"
+        "davidbadura/fixtures": "*",
+        "fzaninotto/faker": "*"
     },
     "autoload": {
         "psr-0": {
