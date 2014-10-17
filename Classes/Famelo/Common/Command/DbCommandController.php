@@ -25,6 +25,7 @@ use Famelo\Common\Fixtures\FlowService;
 use Famelo\Satisfy\Domain\Model\User;
 use TYPO3\Flow\Annotations as Flow;
 use TYPO3\Flow\Persistence\Doctrine\Mapping\ClassMetadata;
+use TYPO3\Flow\Utility\Files;
 use TYPO3\Party\Domain\Model\PersonName;
 
 /**
@@ -212,6 +213,101 @@ class DbCommandController extends AbstractInteractiveCommandController {
         }
 
         return $associationTables;
+    }
+
+    /**
+     * Make a snapshot of the current database
+     *
+     * @return void
+     */
+    public function snapshotCommand() {
+        $connection = $this->entityManager->getConnection();
+        $host = $connection->getHost();
+        $database = $connection->getDatabase();
+        $username = $connection->getUsername();
+        $password = $connection->getPassword();
+
+        $commandParts = array(
+            'mysqldump',
+            '-u' . $username,
+            '-h' . $host
+        );
+        if ($password !== NULL) {
+            $commandParts[] = '-p' . $password;
+        }
+
+        $commandParts[] = $database;
+
+        $date = date('d.m.Y h-i-s');
+        $snapshotFile = FLOW_PATH_DATA . '/Snapshots/' . $date . '.sql';
+
+        Files::createDirectoryRecursively(dirname($snapshotFile));
+
+        $commandParts[] = '> "' . $snapshotFile . '"';
+        $command = implode(' ', $commandParts);
+        system($command);
+
+        $this->outputLine('Created snapshot "' . $date . '"');
+    }
+
+    /**
+     * Make a snapshot of the current database
+     *
+     * @param boolean $latest
+     * @return void
+     */
+    public function restoreSnapshotCommand() {
+        $connection = $this->entityManager->getConnection();
+        $host = $connection->getHost();
+        $database = $connection->getDatabase();
+        $username = $connection->getUsername();
+        $password = $connection->getPassword();
+
+        $commandParts = array(
+            'mysql',
+            '-u' . $username,
+            '-h' . $host
+        );
+        if ($password !== NULL) {
+            $commandParts[] = '-p' . $password;
+        }
+
+        $commandParts[] = $database;
+
+        $snapshotDirectory = FLOW_PATH_DATA . '/Snapshots/';
+        $snapshots = Files::readDirectoryRecursively($snapshotDirectory, 'sql');
+
+        rsort($snapshots);
+        $choices = array();
+        foreach ($snapshots as $snapshot) {
+            $choices[] = basename($snapshot);
+        }
+        $choice = $this->select('Please select a snapshot', $choices);
+        $snapshotFile = $snapshots[$choice];
+
+        Files::createDirectoryRecursively(dirname($snapshotFile));
+
+        $commandParts[] = '< "' . $snapshotFile . '"';
+        $command = implode(' ', $commandParts);
+
+        $orderedTables = $this->getOrderedTables();
+        $platform = $this->entityManager->getConnection()->getDatabasePlatform();
+
+        $connection->executeUpdate("SET foreign_key_checks = 0;");
+        $orderedTables[] = 'flow_doctrine_migrationstatus';
+        $this->outputLine('Dropping existing tables');
+        foreach($orderedTables as $table) {
+            try {
+                $connection->executeUpdate($platform->getDropTableSQL($table, true));
+            } catch(\Exception $e) {
+
+            }
+        }
+        $connection->executeUpdate("SET foreign_key_checks = 1;");
+
+
+        system($command);
+        $this->outputLine('restored snapshot "' . $choices[$choice] . '"');
     }
 }
 
