@@ -218,9 +218,10 @@ class DbCommandController extends AbstractInteractiveCommandController {
     /**
      * Make a snapshot of the current database
      *
+     * @param string $tag
      * @return void
      */
-    public function snapshotCommand() {
+    public function snapshotCommand($tag = NULL) {
         $connection = $this->entityManager->getConnection();
         $host = $connection->getHost();
         $database = $connection->getDatabase();
@@ -238,8 +239,12 @@ class DbCommandController extends AbstractInteractiveCommandController {
 
         $commandParts[] = $database;
 
-        $date = date('d.m.Y h-i-s');
-        $snapshotFile = FLOW_PATH_DATA . '/Snapshots/' . $date . '.sql';
+        $date = date('d.m.Y H-i-s');
+        $snapshotFile = FLOW_PATH_DATA . '/Snapshots/' . $date;
+        if ($tag !== NULL) {
+            $snapshotFile.= ' - ' . $tag;
+        }
+        $snapshotFile.= '.sql';
 
         Files::createDirectoryRecursively(dirname($snapshotFile));
 
