@@ -16,3 +16,4 @@ TYPO3:
        'davidbadura.fixtures' : ['.*']
        'DavidBadura.Fixtures' : ['.*']
        'fzaninotto.faker':      ['.*']
+       'imagine.imagine':       ['.*']
