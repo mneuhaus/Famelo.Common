@@ -67,7 +67,6 @@ class CascadeMadnessController extends \TYPO3\Flow\Mvc\Controller\ActionControll
 	 */
 	public function deleteByUuidAction($uuid, $className) {
 		$entity = $this->persistenceManager->getObjectByIdentifier($uuid, $className);
-
 		$this->persistenceManager->remove($entity);
 		$this->persistenceManager->persistAll();
 		return 'done';
@@ -80,7 +79,7 @@ class CascadeMadnessController extends \TYPO3\Flow\Mvc\Controller\ActionControll
 		$this->uuids[$baseUuid] = array(
 			'path' => 'root',
 			'className' => $className,
-			'name' => $entity->__toString()
+			'name' => is_object($entity) ? $entity->__toString() : ''
 		);
 
 		$this->gatherChildUuids($entity);
@@ -101,7 +100,11 @@ class CascadeMadnessController extends \TYPO3\Flow\Mvc\Controller\ActionControll
 		$propertyNames = $this->reflectionService->getClassPropertyNames($className);
 
 		foreach ($propertyNames as $propertyName) {
-			$propertyValue = ObjectAccess::getProperty($entity, $propertyName);
+			try {
+				$propertyValue = ObjectAccess::getProperty($entity, $propertyName);
+			} catch(\Exception $e) {
+				continue;
+			}
 			if (!is_object($propertyValue)) {
 				continue;
 			}
@@ -112,7 +115,7 @@ class CascadeMadnessController extends \TYPO3\Flow\Mvc\Controller\ActionControll
 
 			if ($this->reflectionService->isClassAnnotatedWith($propertyClassName, '\TYPO3\Flow\Annotations\Entity')) {
 
-				if($this->isAlreadyGathered($propertyValue)) {
+				if($this->isAlreadyGathered($propertyValue) || $propertyPath == 'persistenceManager') {
 					continue;
 				}
 
