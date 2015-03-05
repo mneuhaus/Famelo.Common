@@ -261,7 +261,7 @@ class DbCommandController extends AbstractInteractiveCommandController {
      * @param boolean $latest
      * @return void
      */
-    public function restoreSnapshotCommand() {
+    public function restoreCommand() {
         $connection = $this->entityManager->getConnection();
         $host = $connection->getHost();
         $database = $connection->getDatabase();
@@ -280,15 +280,20 @@ class DbCommandController extends AbstractInteractiveCommandController {
         $commandParts[] = $database;
 
         $snapshotDirectory = FLOW_PATH_DATA . '/Snapshots/';
-        $snapshots = Files::readDirectoryRecursively($snapshotDirectory, 'sql');
+        // $snapshots = Files::readDirectoryRecursively($snapshotDirectory, 'sql');
+        $snapshots = array();
+        foreach (Files::readDirectoryRecursively($snapshotDirectory, 'sql') as $file) {
+            $snapshots[filemtime($file)] = $file;
+        }
 
-        rsort($snapshots);
+        krsort($snapshots);
         $choices = array();
         foreach ($snapshots as $snapshot) {
             $choices[] = basename($snapshot);
         }
         $choice = $this->select('Please select a snapshot', $choices);
-        $snapshotFile = $snapshots[$choice];
+        $keys = array_keys($snapshots);
+        $snapshotFile = $snapshots[$keys[$choice]];
 
         Files::createDirectoryRecursively(dirname($snapshotFile));
 
