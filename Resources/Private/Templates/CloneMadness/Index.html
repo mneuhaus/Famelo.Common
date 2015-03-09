@@ -1,50 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title></title>
-	<!-- Latest compiled and minified CSS -->
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+<f:layout name="Default" />
 
-	<!-- Optional theme -->
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
-
-	<!-- Latest compiled and minified JavaScript -->
-	<script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
-	<style type="text/css">
-		.panel-body {
-			padding: 8px;
-		}
-	</style>
-</head>
-<body>
-	<div class="container">
-		<f:form action="cloneEntity" class="well">
-			<f:form.textfield name="sourceUuid" placeholder="sourceUuid" />
-			<f:form.textfield name="className" placeholder="className" />
-			<button type="submit">Clone Entity</button>
-		</f:form>
+<f:section name="Content">
+	<f:form action="cloneEntity" class="well">
+		<f:form.textfield name="sourceUuid" placeholder="sourceUuid" />
+		<f:form.textfield name="className" placeholder="className" />
+		<button type="submit">Clone Entity</button>
+	</f:form>
 <!-- 		<f:form action="deleteByUuid" class="well">
-			<f:form.textfield name="baseUuid" placeholder="baseUUID" />
-			<f:form.textfield name="className" placeholder="className" />
-			<button type="submit">Delete by UUID</button>
-		</f:form> -->
-		<f:form action="index" class="well" method="get">
-			<f:form.textfield name="sourceUuid" placeholder="baseUUID" value="{sourceUuid}" />
-			<f:form.textfield name="cloneUuid" placeholder="baseUUID" value="{cloneUuid}"  />
-			<f:form.textfield name="className" placeholder="baseUUID" value="{className}"  />
-			<button type="submit">Display results</button>
-		</f:form>
+		<f:form.textfield name="baseUuid" placeholder="baseUUID" />
+		<f:form.textfield name="className" placeholder="className" />
+		<button type="submit">Delete by UUID</button>
+	</f:form> -->
+	<f:form action="index" class="well" method="get">
+		<f:form.textfield name="sourceUuid" placeholder="sourceUuid" value="{sourceUuid}" />
+		<f:form.textfield name="cloneUuid" placeholder="cloneUuid" value="{cloneUuid}"  />
+		<f:form.textfield name="className" placeholder="className" value="{className}"  />
+		<button type="submit">Display results</button>
+	</f:form>
 
-		<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-		<f:for each="{uuids}" as="data">
-			<f:render section="Panel" arguments="{data: data, parent: ''}" />
-		</f:for>
-		</div>
+	<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+	<f:for each="{uuids}" as="data">
+		<f:render section="Panel" arguments="{data: data, parent: ''}" />
+	</f:for>
 	</div>
-
-</body>
-</html>
+</f:section>
 
 <f:section name="Panel">
 	<div class="panel panel-default {f:if(condition: data.cloned, then:'panel-info')}">

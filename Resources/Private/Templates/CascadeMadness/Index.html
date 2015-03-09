@@ -1,33 +1,20 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title></title>
-	<!-- Latest compiled and minified CSS -->
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+<f:layout name="Default" />
 
-	<!-- Optional theme -->
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
-
-	<!-- Latest compiled and minified JavaScript -->
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
-</head>
-<body>
-	<div class="container">
-		<f:form action="gatherUuids" class="well">
-			<f:form.textfield name="baseUuid" placeholder="baseUUID" />
-			<f:form.textfield name="className" placeholder="className" />
-			<button type="submit">Gather UUIDs</button>
-		</f:form>
+<f:section name="Content">
+	<f:form action="gatherUuids" class="well">
+		<f:form.textfield name="baseUuid" placeholder="baseUUID" />
+		<f:form.textfield name="className" placeholder="className" />
+		<button type="submit">Gather UUIDs</button>
+	</f:form>
 <!-- 		<f:form action="deleteByUuid" class="well">
-			<f:form.textfield name="baseUuid" placeholder="baseUUID" />
-			<f:form.textfield name="className" placeholder="className" />
-			<button type="submit">Delete by UUID</button>
-		</f:form> -->
-		<f:form action="index" class="well" method="get">
-			<f:form.textfield name="baseUuid" placeholder="baseUUID" />
-			<button type="submit">Display results</button>
-		</f:form>
-	</div>
+		<f:form.textfield name="baseUuid" placeholder="baseUUID" />
+		<f:form.textfield name="className" placeholder="className" />
+		<button type="submit">Delete by UUID</button>
+	</f:form> -->
+	<f:form action="index" class="well" method="get">
+		<f:form.textfield name="baseUuid" placeholder="baseUUID" />
+		<button type="submit">Display results</button>
+	</f:form>
 
 	<table class="table table-striped table-bordered">
 		<tr>
@@ -52,5 +39,4 @@
 			</tr>
 		</f:for>
 	</table>
-</body>
-</html>
+</f:section>
