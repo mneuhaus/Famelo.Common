@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "require": {
         "typo3/flow": "*",
-        "davidbadura/fixtures": "1.0.*@beta",
+        "davidbadura/fixtures": "dev-master",
         "fzaninotto/faker": "*",
         "imagine/imagine": "~0.5.0"
     },
