@@ -2,7 +2,7 @@
     "name": "famelo/common",
     "type": "typo3-flow-package",
     "description": null,
-    "version": null,
+    "version": "1.0.0",
     "require": {
         "typo3/flow": "*",
         "davidbadura/fixtures": "*",
